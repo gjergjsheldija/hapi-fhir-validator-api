@@ -3,10 +3,12 @@ package com.jtravan.config.loader;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
+import ca.uhn.fhir.context.support.IValidationSupport;
 import ca.uhn.fhir.validation.FhirValidator;
 import com.jtravan.exceptions.UnhandledFhirVersionException;
 import org.hl7.fhir.common.hapi.validation.support.*;
 import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
+import org.hl7.fhir.r5.utils.IResourceValidator;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.lang.Nullable;
@@ -36,6 +38,7 @@ public class ValidatorLoader {
         validationSupportChain.addValidationSupport(new CommonCodeSystemsTerminologyService(ctx));
         validationSupportChain.addValidationSupport(new InMemoryTerminologyServerValidationSupport(ctx));
         validationSupportChain.addValidationSupport(new SnapshotGeneratingValidationSupport(ctx));
+        validationSupportChain.addValidationSupport(new UnknownCodeSystemWarningValidationSupport(ctx));
 
         if (fhirVersionEnum.isNewerThan(fhirVersionEnum.DSTU2_1)) {
             NpmPackageValidationSupport npmPackageValidationSupport = new NpmPackageValidationSupport(ctx);
@@ -52,6 +55,7 @@ public class ValidatorLoader {
         // Create a FhirInstanceValidator and register it to a validator
         FhirValidator validator = ctx.newValidator();
         FhirInstanceValidator instanceValidator = new FhirInstanceValidator(cache);
+        instanceValidator.setBestPracticeWarningLevel(IResourceValidator.BestPracticeWarningLevel.Warning);
         validator.registerValidatorModule(instanceValidator);
 
         return validator;
